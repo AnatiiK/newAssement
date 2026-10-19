@@ -1,0 +1,16 @@
+# Build output
+bin/
+obj/
+TestResults/
+.vs/
+*.user
+
+# Runtime data (re-created and seeded on startup)
+src/SalesOrders.Web/App_Data/
+
+# Non-code files
+*.zip
+*.pdf
+*.docx
+.claude/
+.DS_Store

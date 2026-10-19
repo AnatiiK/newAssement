@@ -1,0 +1,36 @@
+@model DogViewModel
+@{
+    ViewData["Title"] = "Dog API";
+}
+
+<h1 class="h3">Dog API</h1>
+<p class="text-muted">Fetches a random image from <a href="https://dog.ceo/dog-api/" target="_blank" rel="noopener">dog.ceo</a>.</p>
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+        <label for="breed" class="form-label">Breed</label>
+        <select id="breed" name="breed" class="form-select">
+            <option value="">Any breed</option>
+            @foreach (var breed in Model.Breeds)
+            {
+                <option value="@breed" selected="@(breed == Model.SelectedBreed)">@breed</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Fetch another dog</button>
+    </div>
+</form>
+
+@if (Model.Error is not null)
+{
+    <div class="alert alert-warning">@Model.Error</div>
+}
+@if (Model.ImageUrl is not null)
+{
+    <figure class="figure">
+        <img src="@Model.ImageUrl" alt="Random dog@(Model.SelectedBreed is null ? "" : $" ({Model.SelectedBreed})")"
+             class="figure-img img-fluid rounded shadow-sm dog-image" />
+        <figcaption class="figure-caption"><code>@Model.ImageUrl</code></figcaption>
+    </figure>
+}

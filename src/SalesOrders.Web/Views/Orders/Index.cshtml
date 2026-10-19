@@ -1,0 +1,222 @@
+@model OrderIndexViewModel
+@{
+    ViewData["Title"] = "Orders";
+    var canEdit = User.IsInRole(Roles.Admin);
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+
+    // Search parameters carried through when selecting an order or filtering its lines.
+    Dictionary<string, string> SearchRoute(string? selected = null)
+    {
+        var route = new Dictionary<string, string>();
+        if (!string.IsNullOrWhiteSpace(Model.Search.OrderText)) route["OrderText"] = Model.Search.OrderText;
+        if (Model.Search.OrderType is { } t) route["OrderType"] = t.ToString();
+        if (Model.Search.FromDate is { } f) route["FromDate"] = f.ToString("yyyy-MM-dd");
+        if (Model.Search.ToDate is { } d) route["ToDate"] = d.ToString("yyyy-MM-dd");
+        if (selected is not null) route["selected"] = selected;
+        return route;
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Orders</h1>
+    @if (canEdit)
+    {
+        <a asp-action="Create" class="btn btn-primary">New order</a>
+    }
+</div>
+
+@* ---------- Header search ---------- *@
+<form method="get" asp-action="Index" class="card card-body bg-light mb-3 py-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label asp-for="Search.OrderText" class="form-label small mb-1"></label>
+            <input asp-for="Search.OrderText" name="OrderText" class="form-control form-control-sm" placeholder="e.g. SO625144 or KFC" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Search.OrderType" class="form-label small mb-1"></label>
+            <select asp-for="Search.OrderType" name="OrderType" class="form-select form-select-sm"
+                    asp-items="Html.GetEnumSelectList<OrderType>()">
+                <option value="">All</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Search.FromDate" class="form-label small mb-1"></label>
+            <input asp-for="Search.FromDate" name="FromDate" type="date" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Search.ToDate" class="form-label small mb-1"></label>
+            <input asp-for="Search.ToDate" name="ToDate" type="date" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-primary flex-fill">Search</button>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Clear</a>
+        </div>
+    </div>
+    <span asp-validation-for="Search.ToDate" class="text-danger small"></span>
+</form>
+
+@* ---------- Order header grid ---------- *@
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle orders-grid">
+        <thead class="table-dark">
+            <tr>
+                <th>Order Number</th>
+                <th>Order Type</th>
+                <th>Status</th>
+                <th>Customer</th>
+                <th>Created</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Orders.Count == 0)
+            {
+                <tr><td colspan="6" class="text-center text-muted py-4">No orders match the search.</td></tr>
+            }
+            @foreach (var order in Model.Orders)
+            {
+                var isSelected = string.Equals(order.OrderNumber, Model.SelectedOrderNumber, StringComparison.OrdinalIgnoreCase);
+                <tr class="@(isSelected ? "table-primary" : "")">
+                    <td>
+                        <a asp-action="Index" asp-all-route-data="SearchRoute(order.OrderNumber)" class="fw-semibold">@order.OrderNumber</a>
+                    </td>
+                    <td>@order.OrderType</td>
+                    <td><span class="badge status-@order.OrderStatus.ToString().ToLowerInvariant()">@order.OrderStatus</span></td>
+                    <td>@order.CustomerName</td>
+                    <td>@order.CreateDate.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Index" asp-all-route-data="SearchRoute(order.OrderNumber)" class="btn btn-sm btn-outline-primary">View lines</a>
+                        @if (canEdit)
+                        {
+                            <a asp-action="Edit" asp-route-id="@order.OrderNumber" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <form asp-action="Delete" asp-route-id="@order.OrderNumber" method="post" class="d-inline"
+                                  onsubmit="return confirm('Delete order @order.OrderNumber and all of its lines?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* ---------- Order line grid for the selected order ---------- *@
+@if (Model.SelectedOrderNumber is not null && Model.SelectedOrder is null)
+{
+    <div class="alert alert-warning">Order @Model.SelectedOrderNumber was not found.</div>
+}
+@if (Model.SelectedOrder is { } selectedOrder)
+{
+    var header = selectedOrder.Header;
+    <div class="card mt-4" id="lines">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <strong>Order lines – @header.OrderNumber</strong>
+                <span class="text-muted">(@header.CustomerName, @header.OrderType, @header.OrderStatus)</span>
+            </div>
+            <form method="get" asp-action="Index" class="d-flex gap-2">
+                @foreach (var kv in SearchRoute(header.OrderNumber))
+                {
+                    <input type="hidden" name="@kv.Key" value="@kv.Value" />
+                }
+                <input name="productCode" value="@Model.ProductCode" class="form-control form-control-sm"
+                       placeholder="Search product code" aria-label="Search product code" />
+                <button type="submit" class="btn btn-sm btn-outline-primary">Search</button>
+                @if (!string.IsNullOrEmpty(Model.ProductCode))
+                {
+                    <a asp-action="Index" asp-all-route-data="SearchRoute(header.OrderNumber)" class="btn btn-sm btn-outline-secondary">Clear</a>
+                }
+            </form>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-striped mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Line #</th>
+                            <th>Product Code</th>
+                            <th>Product Type</th>
+                            <th class="text-end">Cost Price</th>
+                            <th class="text-end">Sales Price</th>
+                            <th class="text-end">Quantity</th>
+                            <th class="text-end">Line Total</th>
+                            @if (canEdit) { <th class="text-end">Actions</th> }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.SelectedLines.Count == 0)
+                        {
+                            <tr><td colspan="8" class="text-center text-muted py-3">No order lines.</td></tr>
+                        }
+                        @foreach (var line in Model.SelectedLines)
+                        {
+                            <tr>
+                                <td>@line.LineNumber</td>
+                                <td>@line.ProductCode</td>
+                                <td>@line.ProductType</td>
+                                <td class="text-end">@line.CostPrice.ToString("N2")</td>
+                                <td class="text-end">@line.SalesPrice.ToString("N2")</td>
+                                <td class="text-end">@line.Quantity</td>
+                                <td class="text-end">@((line.SalesPrice * line.Quantity).ToString("N2"))</td>
+                                @if (canEdit)
+                                {
+                                    <td class="text-end text-nowrap">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary js-edit-line"
+                                                data-bs-toggle="modal" data-bs-target="#lineModal"
+                                                data-line-number="@line.LineNumber"
+                                                data-product-code="@line.ProductCode"
+                                                data-product-type="@((int)line.ProductType)"
+                                                data-cost-price="@line.CostPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                data-sales-price="@line.SalesPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                data-quantity="@line.Quantity">
+                                            Edit
+                                        </button>
+                                        <form asp-action="DeleteLine" method="post" class="d-inline"
+                                              onsubmit="return confirm('Delete line @line.LineNumber?');">
+                                            <input type="hidden" name="orderNumber" value="@header.OrderNumber" />
+                                            <input type="hidden" name="lineNumber" value="@line.LineNumber" />
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                    @if (selectedOrder.Lines.Count > 0)
+                    {
+                        <tfoot>
+                            <tr class="fw-semibold">
+                                <td colspan="6" class="text-end">Order total</td>
+                                <td class="text-end">@selectedOrder.Lines.Sum(l => l.SalesPrice * l.Quantity).ToString("N2")</td>
+                                @if (canEdit) { <td></td> }
+                            </tr>
+                        </tfoot>
+                    }
+                </table>
+            </div>
+        </div>
+        @if (canEdit)
+        {
+            <div class="card-footer">
+                <button type="button" class="btn btn-sm btn-primary js-add-line" data-bs-toggle="modal" data-bs-target="#lineModal">
+                    Add line
+                </button>
+            </div>
+        }
+    </div>
+
+    @if (canEdit)
+    {
+        <partial name="_LineModal" model="new OrderLineEditModel { OrderNumber = header.OrderNumber, ReturnUrl = returnUrl }" />
+    }
+}
+
+@section Scripts {
+    @if (canEdit && Model.SelectedOrder is not null)
+    {
+        <partial name="_ValidationScriptsPartial" />
+        <script src="~/js/order-lines.js" asp-append-version="true"></script>
+    }
+}

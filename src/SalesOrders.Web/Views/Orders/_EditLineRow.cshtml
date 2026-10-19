@@ -1,0 +1,43 @@
+@model OrderLine
+@*
+    One editable order line. Rendered with HtmlFieldPrefix "Lines[key]" and a matching
+    "Lines.Index" hidden field so rows can be added/removed client-side without renumbering.
+*@
+@{
+    var key = (string)ViewData["RowKey"]!;
+    var priceValue = (decimal v) => v == 0 ? "" : v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+}
+<tr class="line-row" data-line-number="@Model.LineNumber">
+    <td>
+        <input type="hidden" name="Lines.Index" value="@key" />
+        <input type="hidden" asp-for="LineNumber" />
+        <span class="line-number fw-semibold">@(Model.LineNumber > 0 ? Model.LineNumber : "")</span>
+    </td>
+    <td>
+        <input asp-for="ProductCode" class="form-control form-control-sm text-uppercase" aria-label="Product code" />
+        <span asp-validation-for="ProductCode" class="text-danger small"></span>
+    </td>
+    <td>
+        <select asp-for="ProductType" class="form-select form-select-sm" aria-label="Product type"
+                asp-items="Html.GetEnumSelectList<ProductType>()"></select>
+    </td>
+    <td>
+        <input asp-for="CostPrice" type="text" inputmode="decimal" class="form-control form-control-sm" aria-label="Cost price"
+               value="@(ViewData.ModelState[ViewData.TemplateInfo.GetFullHtmlFieldName("CostPrice")]?.AttemptedValue ?? priceValue(Model.CostPrice))" />
+        <span asp-validation-for="CostPrice" class="text-danger small"></span>
+    </td>
+    <td>
+        <input asp-for="SalesPrice" type="text" inputmode="decimal" class="form-control form-control-sm" aria-label="Sales price"
+               value="@(ViewData.ModelState[ViewData.TemplateInfo.GetFullHtmlFieldName("SalesPrice")]?.AttemptedValue ?? priceValue(Model.SalesPrice))" />
+        <span asp-validation-for="SalesPrice" class="text-danger small"></span>
+    </td>
+    <td>
+        <input asp-for="Quantity" type="text" inputmode="numeric" class="form-control form-control-sm" aria-label="Quantity"
+               data-val-regex="Quantity must be a whole number." data-val-regex-pattern="^\d+$"
+               value="@(ViewData.ModelState[ViewData.TemplateInfo.GetFullHtmlFieldName("Quantity")]?.AttemptedValue ?? (Model.Quantity == 0 ? "" : Model.Quantity.ToString()))" />
+        <span asp-validation-for="Quantity" class="text-danger small"></span>
+    </td>
+    <td class="text-end">
+        <button type="button" class="btn btn-sm btn-outline-danger js-remove-line" aria-label="Remove line">&times;</button>
+    </td>
+</tr>

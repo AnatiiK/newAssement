@@ -1,0 +1,42 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+.validation-summary-valid.empty-hidden {
+  display: none;
+}
+
+.orders-grid tbody tr > td:first-child a {
+  text-decoration: none;
+}
+
+.badge.status-new { background-color: #0d6efd; }
+.badge.status-processing { background-color: #fd7e14; }
+.badge.status-complete { background-color: #198754; }
+
+.edit-lines td { vertical-align: top; }
+.edit-lines .line-number { display: inline-block; padding-top: .3rem; }
+.edit-lines .form-control, .edit-lines .form-select { min-width: 7rem; }
+.table-responsive:has(#linesTable tbody tr) + .empty-lines-hint { display: none; }
+
+.input-validation-error { border-color: #dc3545; }
+
+.dog-image { max-height: 480px; }

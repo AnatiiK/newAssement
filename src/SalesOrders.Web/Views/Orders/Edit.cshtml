@@ -1,0 +1,106 @@
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@model OrderEditViewModel
+@{
+    ViewData["Title"] = Model.IsNew ? "New order" : $"Edit order {Model.Header.OrderNumber}";
+    var nextLine = Model.Lines.Where(l => l.LineNumber > 0).Select(l => l.LineNumber).DefaultIfEmpty(0).Max() + 1;
+
+    ViewDataDictionary RowViewData(string key)
+    {
+        var vd = new ViewDataDictionary(ViewData) { ["RowKey"] = key };
+        vd.TemplateInfo.HtmlFieldPrefix = $"Lines[{key}]";
+        return vd;
+    }
+    var templateViewData = RowViewData("__key__");
+
+    // When redisplaying a failed post, reuse the posted row keys so ModelState errors and
+    // attempted values (keyed "Lines[key].Field") line up with their rows.
+    var postedKeys = Context.Request.HasFormContentType ? Context.Request.Form["Lines.Index"].ToArray() : Array.Empty<string?>();
+    string RowKey(int i) => postedKeys.Length == Model.Lines.Count ? postedKeys[i]! : i.ToString();
+}
+
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+<form asp-action="@(Model.IsNew ? "Create" : "Edit")" method="post" id="orderForm" novalidate>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small empty-hidden"></div>
+
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">Order header</div>
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label asp-for="Header.OrderNumber" class="form-label"></label>
+                @if (Model.IsNew)
+                {
+                    <input asp-for="Header.OrderNumber" class="form-control text-uppercase" placeholder="e.g. SO625146" autofocus />
+                }
+                else
+                {
+                    <input asp-for="Header.OrderNumber" class="form-control" readonly />
+                }
+                <span asp-validation-for="Header.OrderNumber" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Header.OrderType" class="form-label"></label>
+                <select asp-for="Header.OrderType" class="form-select" asp-items="Html.GetEnumSelectList<OrderType>()"></select>
+                <span asp-validation-for="Header.OrderType" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Header.OrderStatus" class="form-label"></label>
+                <select asp-for="Header.OrderStatus" class="form-select" asp-items="Html.GetEnumSelectList<OrderStatus>()"></select>
+                <span asp-validation-for="Header.OrderStatus" class="text-danger small"></span>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="Header.CustomerName" class="form-label"></label>
+                <input asp-for="Header.CustomerName" class="form-control" />
+                <span asp-validation-for="Header.CustomerName" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Header.CreateDate" class="form-label"></label>
+                <input asp-for="Header.CreateDate" type="datetime-local" class="form-control" />
+                <span asp-validation-for="Header.CreateDate" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Order lines</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="addLine">Add line</button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0 edit-lines" id="linesTable" data-next-line="@nextLine">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:4rem">Line #</th>
+                            <th>Product Code</th>
+                            <th>Product Type</th>
+                            <th>Cost Price</th>
+                            <th>Sales Price</th>
+                            <th>Quantity</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Lines.Count; i++)
+                        {
+                            <partial name="_EditLineRow" model="Model.Lines[i]" view-data="RowViewData(RowKey(i))" />
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted small m-2 empty-lines-hint">No lines yet – click “Add line”.</p>
+        </div>
+    </div>
+
+    <template id="lineRowTemplate">
+        <partial name="_EditLineRow" model="new OrderLine()" view-data="templateViewData" />
+    </template>
+
+    <button type="submit" class="btn btn-primary">@(Model.IsNew ? "Create order" : "Save changes")</button>
+    <a asp-action="Index" asp-route-selected="@(Model.IsNew ? null : Model.Header.OrderNumber)" class="btn btn-link">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/order-edit.js" asp-append-version="true"></script>
+}
