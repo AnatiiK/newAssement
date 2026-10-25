@@ -29,7 +29,7 @@ dotnet test
 
 | # | Requirement | Where |
 |---|---|---|
-| 1 | MVC app with an XML data store that is updated on add, edit and delete | `Data/XmlOrderStore.cs` → `src/SalesOrders.Web/App_Data/orders.xml` |
+| 1 | MVC app with an XML data store that is updated on add, edit and delete | `Data/XmlOrderStore.cs` writes to `src/SalesOrders.Web/App_Data/orders.xml` |
 | 1e | Input validation (for example, Quantity can't accept text) | DataAnnotations on `Models/SalesOrder.cs`, enforced in the browser by jQuery unobtrusive validation and on the server by `ModelState` |
 | 2 | Capture/update screen for the header and its lines | `Views/Orders/Edit.cshtml` (used for both Create and Edit). Lines are added and removed in the page, and line numbers auto-increment from 1 |
 | 3 | Header grid, with the line grid shown when an order is selected | `Views/Orders/Index.cshtml` |
@@ -38,13 +38,13 @@ dotnet test
 | 3e | Search lines by product code | Search box on the line grid |
 | 4 | SQL Server create script | `database/CreateDatabase.sql` (ERD in `docs/ERD.md`) |
 | 5 | Login, Admin and Guest roles, adding users | Cookie auth (`AccountController`), the `CanEdit` policy, and `UsersController` (admin only) |
-| 6 | REST GET by order number | `GET /api/orders/{orderNumber}` or `GET /api/orders?orderNumber=…` (requires login; returns 401 otherwise) |
+| 6 | REST GET by order number | `GET /api/orders/{orderNumber}` or `GET /api/orders?orderNumber=SO625144` (requires login; returns 401 otherwise) |
 | 7 | Unit tests | `tests/SalesOrders.Tests`: covers adding and updating orders and lines, search, and the user store |
 | 8 | Dog API | **Dog API** menu item: shows a random image, with an optional breed filter |
 
 ## Design notes
 
-- **Storage.** The store is XML (`<SalesOrders><SalesOrder><OrderHeader/><OrderLine/>…`), so it
+- **Storage.** The store is XML (`<SalesOrders><SalesOrder><OrderHeader/><OrderLine/>...`), so it
   can be compared directly with the spec's example. Each change reads the file, applies the
   change, and writes it back. A lock prevents two requests from writing at the same time. The new
   contents go to a temp file that then replaces the original, so the file can't be left half

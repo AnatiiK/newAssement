@@ -12,5 +12,4 @@ src/SalesOrders.Web/App_Data/
 *.zip
 *.pdf
 *.docx
-.claude/
 .DS_Store

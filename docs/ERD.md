@@ -1,4 +1,4 @@
-# ER Diagram – Sales Orders
+# ER Diagram - Sales Orders
 
 The completed version of the supplied `ER Diagram.docx` template. It uses the same six tables
 and relationships drawn in the template, with columns taken from the XML structure and from the
@@ -57,19 +57,19 @@ erDiagram
 | **OrderHeader** | OrderHeaderId | PK | surrogate |
 | | OrderNumber | Unique | XML `OrderNumber` |
 | | OrderType | | Dropdown: Normal, Staff, Mechanical, Perishable |
-| | OrderStatusId | FK → OrderHeaderStatus | XML `OrderStatus` |
-| | CustomerId | FK → Customers | XML `CustomerName` |
+| | OrderStatusId | FK to OrderHeaderStatus | XML `OrderStatus` |
+| | CustomerId | FK to Customers | XML `CustomerName` |
 | | CreateDate | | XML `CreateDate` |
 | **OrderLine** | OrderLineId | PK | surrogate |
-| | OrderHeaderId | FK → OrderHeader | parent `SalesOrder` |
+| | OrderHeaderId | FK to OrderHeader | parent `SalesOrder` |
 | | LineNumber | Unique per order | XML `LineNumber` |
-| | ProductId | FK → Products | XML `ProductCode` |
+| | ProductId | FK to Products | XML `ProductCode` |
 | | CostPrice | | XML `CostPrice` |
 | | SalesPrice | | XML `SalesPrice` |
 | | Quantity | | XML `Quantity` |
 | **Products** | ProductId | PK | surrogate |
 | | ProductCode | Unique | XML `ProductCode` |
-| | ProductTypeId | FK → ProductTypes | XML `ProductType` |
+| | ProductTypeId | FK to ProductTypes | XML `ProductType` |
 | | CostPrice | | current list cost |
 | | SalesPrice | | current list price |
 | **ProductTypes** | ProductTypeId | PK | surrogate |

@@ -4,12 +4,11 @@
     Mirrors the structure of the application's XML store (App_Data/orders.xml), normalised
     into the six tables from the supplied ER diagram:
 
-        OrderHeaderStatus 1───* OrderHeader *───1 Customers
-                                     │
-                                     1
-                                     │
-                                     *
-        ProductTypes 1───* Products 1───* OrderLine
+        OrderHeaderStatus 1-* OrderHeader
+        Customers         1-* OrderHeader
+        OrderHeader       1-* OrderLine
+        Products          1-* OrderLine
+        ProductTypes      1-* Products
 
     Order Type (Normal / Staff / Mechanical / Perishable) has no lookup table in the ERD,
     so it is a column on OrderHeader constrained by a CHECK.
